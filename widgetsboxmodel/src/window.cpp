@@ -28,6 +28,7 @@
 #include <QStyleFactory>
 #include <QTimer>
 #include <QWindow>
+#include <QInputMethodEvent>
 #include <albert/logging.h>
 #include <albert/pluginloader.h>
 #include <albert/pluginmetadata.h>
@@ -186,6 +187,7 @@ Window::Window(Plugin *p):
         setWindowFlags(Qt::Tool|Qt::FramelessWindowHint);
         setAttribute(Qt::WA_TranslucentBackground);
 
+        input_line->setAttribute(Qt::WA_InputMethodEnabled, true);
         input_line->installEventFilter(this);
 
         // reproducible UX
@@ -736,6 +738,12 @@ bool Window::eventFilter(QObject *watched, QEvent *event)
 {
     if (watched == input_line)
     {
+        QString currentQuery = input_line->text();
+        if(event->type() == QEvent::InputMethod) {
+            QInputMethodEvent * keyEvent = static_cast<QInputMethodEvent*>(event);
+            QString s = keyEvent->preeditString();
+            input_line->textChanged(currentQuery + s);
+        }
         if (event->type() == QEvent::KeyPress)
         {
             auto *keyEvent = static_cast<QKeyEvent *>(event);
